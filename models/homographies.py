@@ -64,11 +64,11 @@ def homography_adaptation(image, net, config):
         if config['valid_border_margin']:
             kernel = cv.getStructuringElement(
                 cv.MORPH_ELLIPSE, (config['valid_border_margin'] * 2,) * 2)
-            with tf.device('/cpu:0'):
-                count = tf.nn.erosion2d(
+            #with tf.device('/cpu:0'):
+            count = tf.nn.erosion2d(
                     count, tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
                     [1, 1, 1, 1], [1, 1, 1, 1], 'SAME')[..., 0] + 1.
-                mask = tf.nn.erosion2d(
+            mask = tf.nn.erosion2d(
                     mask, tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
                     [1, 1, 1, 1], [1, 1, 1, 1], 'SAME')[..., 0] + 1.
 

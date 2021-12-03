@@ -14,17 +14,18 @@ augmentations = [
 
 
 def additive_gaussian_noise(image, stddev_range=[5, 95]):
-    stddev = tf.random_uniform((), *stddev_range)
-    noise = tf.random_normal(tf.shape(image), stddev=stddev)
+    stddev = tf.random.uniform((), *stddev_range)
+    noise = tf.random.normal(tf.shape(image), stddev=stddev)
+    image = tf.cast(image, tf.float32)
     noisy_image = tf.clip_by_value(image + noise, 0, 255)
     return noisy_image
 
 
 def additive_speckle_noise(image, prob_range=[0.0, 0.005]):
-    prob = tf.random_uniform((), *prob_range)
-    sample = tf.random_uniform(tf.shape(image))
+    prob = tf.random.uniform((), *prob_range)
+    sample = tf.random.uniform(tf.shape(image))
     noisy_image = tf.where(sample <= prob, tf.zeros_like(image), image)
-    noisy_image = tf.where(sample >= (1. - prob), 255.*tf.ones_like(image), noisy_image)
+    noisy_image = tf.where(sample >= (1. - prob), 255*tf.ones_like(image), noisy_image)
     return noisy_image
 
 
@@ -59,7 +60,7 @@ def additive_shade(image, nb_ellipses=20, transparency_range=[-0.5, 0.8],
         shaded = img * (1 - transparency * mask[..., np.newaxis]/255.)
         return np.clip(shaded, 0, 255)
 
-    shaded = tf.py_func(_py_additive_shade, [image], tf.float32)
+    shaded = tf.numpy_function(_py_additive_shade, [image], tf.float32)
     res = tf.reshape(shaded, tf.shape(image))
     return res
 
@@ -88,5 +89,5 @@ def motion_blur(image, max_kernel_size=10):
         img = cv.filter2D(img, -1, kernel)
         return img
 
-    blurred = tf.py_func(_py_motion_blur, [image], tf.float32)
+    blurred = tf.numpy_function(_py_motion_blur, [image], tf.float32)
     return tf.reshape(blurred, tf.shape(image))
