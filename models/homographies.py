@@ -8,7 +8,8 @@ from utils.tools import dict_update
 
 
 homography_adaptation_default_config = {
-        'num': 1,
+        'num': 100,
+        'data_format': 'NHWC',
         'aggregation': 'sum',
         'valid_border_margin': 3,
         'homographies': {
@@ -16,17 +17,18 @@ homography_adaptation_default_config = {
             'rotation': True,
             'scaling': True,
             'perspective': True,
-            'scaling_amplitude': 0.1,
-            'perspective_amplitude_x': 0.1,
-            'perspective_amplitude_y': 0.1,
-            'patch_ratio': 0.5,
-            'max_angle': pi,
+            'scaling_amplitude': 0.2,
+            'perspective_amplitude_x': 0.2,
+            'perspective_amplitude_y': 0.2,
+            'allow_artifacts': True,
+            'patch_ratio': 0.85,
+            #'max_angle': pi,
         },
         'filter_counts': 0
 }
 
 
-def homography_adaptation(image, net, config):
+def homography_adaptation(image, net, config = homography_adaptation_default_config):
     """Perfoms homography adaptation.
     Inference using multiple random warped patches of the same input image for robust
     predictions.
@@ -64,13 +66,15 @@ def homography_adaptation(image, net, config):
         if config['valid_border_margin']:
             kernel = cv.getStructuringElement(
                 cv.MORPH_ELLIPSE, (config['valid_border_margin'] * 2,) * 2)
-            #with tf.device('/cpu:0'):
+            #with tf.device('/cpu:0'):           
             count = tf.nn.erosion2d(
-                    count, tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
-                    [1, 1, 1, 1], [1, 1, 1, 1], 'SAME')[..., 0] + 1.
+                    value = count, filters = tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
+                    strides = [1, 1, 1, 1], dilations = [1, 1, 1, 1], padding = 'SAME',
+                    data_format = config['data_format'])[..., 0] + 1.
             mask = tf.nn.erosion2d(
-                    mask, tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
-                    [1, 1, 1, 1], [1, 1, 1, 1], 'SAME')[..., 0] + 1.
+                    value = mask, filters = tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
+                    strides = [1, 1, 1, 1], dilations = [1, 1, 1, 1], padding = 'SAME',
+                    data_format = config['data_format'])[..., 0] + 1.
 
         # Predict detection probabilities
         prob = net(warped)['prob']

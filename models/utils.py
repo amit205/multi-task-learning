@@ -46,8 +46,8 @@ def detector_head(model_config, shape = (30, 40, 128)):
     params_conv = {'padding': 'SAME', 'data_format': model_config['data_format'],
                    'batch_normalization': True,
                    'kernel_reg': model_config.get('kernel_reg', 0.)}
-#     cfirst = model_config['data_format'] == 'channels_first'
-#     cindex = 1 if cfirst else -1  # index of the channel
+    cfirst = model_config['data_format'] == 'channels_first'
+    cindex = 1 if cfirst else -1  # index of the channel
 
     inputs = Input(shape)
     x = vgg_block(inputs, 256, 3, 'conv1',
@@ -55,14 +55,14 @@ def detector_head(model_config, shape = (30, 40, 128)):
     x = vgg_block(x, 1+pow(model_config['grid_size'], 2), 1, 'conv2',
                       activation=None, **params_conv)
 
-#     prob = tf.nn.softmax(x, axis=cindex)
-#     # Strip the extra “no interest point” dustbin
-#     prob = prob[:, :-1, :, :] if cfirst else prob[:, :, :, :-1]
-#     prob = tf.nn.depth_to_space(
-#               prob, model_config['grid_size'], data_format='NCHW' if cfirst else 'NHWC')
-#     prob = tf.squeeze(prob, axis=cindex)
+    prob = tf.nn.softmax(x, axis=cindex)
+    # Strip the extra “no interest point” dustbin
+    prob = prob[:, :-1, :, :] if cfirst else prob[:, :, :, :-1]
+    prob = tf.nn.depth_to_space(
+              prob, model_config['grid_size'], data_format='NCHW' if cfirst else 'NHWC')
+    prob = tf.squeeze(prob, axis=cindex)
 #     return {'logits': x, 'prob': prob}
-    return keras.models.Model(inputs = inputs, outputs = x, name = 'detector_head')
+    return keras.models.Model(inputs = inputs, outputs = {'logits': x, 'prob': prob}, name = 'detector_head')
 
 
 def descriptor_head(shape, model_config):
