@@ -86,3 +86,29 @@ def descriptor_head(shape, model_config):
 
 #     return {'descriptors_raw': x, 'descriptors': desc}
     return keras.models.Model(inputs = inputs, outputs = x, name = 'descriptor_head')
+
+def box_nms(prob, size, iou=0.1, min_prob=0.01, keep_top_k=0):
+    """Performs non maximum suppression on the heatmap by considering hypothetical
+    bounding boxes centered at each pixel's location (e.g. corresponding to the receptive
+    field). Optionally only keeps the top k detections.
+    Arguments:
+        prob: the probability heatmap, with shape `[H, W]`.
+        size: a scalar, the size of the bouding boxes.
+        iou: a scalar, the IoU overlap threshold.
+        min_prob: a threshold under which all probabilities are discarded before NMS.
+        keep_top_k: an integer, the number of top scores to keep.
+    """
+    with tf.name_scope('box_nms'):
+        pts = tf.cast(tf.where(tf.greater_equal(prob, min_prob)), tf.float32)
+        size = tf.constant(size/2.)
+        boxes = tf.concat([pts-size, pts+size], axis=1)
+        scores = tf.gather_nd(prob, tf.cast(pts, tf.int32))
+        indices = tf.image.non_max_suppression(boxes, scores, tf.shape(boxes)[0], iou)
+        pts = tf.gather(pts, indices)
+        scores = tf.gather(scores, indices)
+        if keep_top_k:
+            k = tf.minimum(tf.shape(scores)[0], tf.constant(keep_top_k))  # when fewer
+            scores, indices = tf.nn.top_k(scores, k)
+            pts = tf.gather(pts, indices)
+        prob = tf.scatter_nd(tf.cast(pts, tf.int32), scores, tf.shape(prob))
+    return prob
