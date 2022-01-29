@@ -97,8 +97,8 @@ def downsample(image, coordinates, **config):
 
 def ratio_preserving_resize(image, **config):
     target_size = tf.convert_to_tensor(config['resize'])
-    scales = tf.to_float(tf.divide(target_size, tf.shape(image)[:2]))
-    new_size = tf.to_float(tf.shape(image)[:2]) * tf.reduce_max(scales)
-    image = tf.image.resize_images(image, tf.to_int32(new_size),
+    scales = tf.cast(tf.divide(target_size, tf.shape(image)[:2]), tf.float32)
+    new_size = tf.cast(tf.shape(image)[:2], tf.float32) * tf.reduce_max(scales)
+    image = tf.image.resize(image, tf.cast(new_size, tf.int32),
                                    method=tf.image.ResizeMethod.BILINEAR)
-    return tf.image.resize_image_with_crop_or_pad(image, target_size[0], target_size[1])
+    return tf.image.resize_with_crop_or_pad(image, target_size[0], target_size[1])
