@@ -2,7 +2,7 @@ import numpy as np
 from os import path as osp
 from glob import glob
 
-from superpoint.settings import EXPER_PATH
+EXPER_PATH = '/root/Internship-Valeo/Project/exports'
 
 
 def get_paths(exper_name):

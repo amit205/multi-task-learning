@@ -3,14 +3,15 @@ import cv2
 from os import path as osp
 from glob import glob
 
-from superpoint.settings import EXPER_PATH
-
+EXPER_PATH = '/root/Internship-Valeo/Project/exports'
 
 def get_paths(exper_name):
     """
     Return a list of paths to the outputs of the experiment.
     """
-    return glob(osp.join(EXPER_PATH, 'outputs/{}/*.npz'.format(exper_name)))
+#    return glob(osp.join(EXPER_PATH, 'outputs/{}/*.npz'.format(exper_name)))
+    return glob(osp.join(EXPER_PATH, '{}/*.npz'.format(exper_name)))
+
 
 
 def keep_shared_points(keypoint_map, H, keep_k_points=1000):
@@ -41,13 +42,13 @@ def keep_shared_points(keypoint_map, H, keep_k_points=1000):
         mask = (warped_points[:, 0] >= 0) & (warped_points[:, 0] < shape[0]) &\
                (warped_points[:, 1] >= 0) & (warped_points[:, 1] < shape[1])
         return points[mask, :]
-
+    
     keypoints = np.where(keypoint_map > 0)
     prob = keypoint_map[keypoints[0], keypoints[1]]
     keypoints = np.stack([keypoints[0], keypoints[1], prob], axis=-1)
     keypoints = keep_true_keypoints(keypoints, H, keypoint_map.shape)
     keypoints = select_k_best(keypoints, keep_k_points)
-
+    print(H)
     return keypoints.astype(int)
 
 
@@ -57,10 +58,10 @@ def compute_homography(data, keep_k_points=1000, correctness_thresh=3, orb=False
     """
     shape = data['prob'].shape
     real_H = data['homography']
-
     # Keeps only the points shared between the two views
     keypoints = keep_shared_points(data['prob'],
                                    real_H, keep_k_points)
+ 
     warped_keypoints = keep_shared_points(data['warped_prob'],
                                           np.linalg.inv(real_H), keep_k_points)
     desc = data['desc'][keypoints[:, 0], keypoints[:, 1]]
