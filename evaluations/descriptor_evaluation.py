@@ -48,7 +48,6 @@ def keep_shared_points(keypoint_map, H, keep_k_points=1000):
     keypoints = np.stack([keypoints[0], keypoints[1], prob], axis=-1)
     keypoints = keep_true_keypoints(keypoints, H, keypoint_map.shape)
     keypoints = select_k_best(keypoints, keep_k_points)
-    print(H)
     return keypoints.astype(int)
 
 
