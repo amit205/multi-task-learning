@@ -278,7 +278,7 @@ def compute_valid_mask(image_shape, homography, erosion_radius=0):
         mask = tf.nn.erosion2d(
                 mask[tf.newaxis, ..., tf.newaxis],
                 tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
-                [1, 1, 1, 1], [1, 1, 1, 1], 'SAME')[0, ..., 0] + 1.
+                [1, 1, 1, 1], dilations=[1, 1, 1, 1], padding='SAME', data_format = 'NHWC')[0, ..., 0] + 1.
     return tf.cast(mask, tf.int32)
 
 

@@ -2,7 +2,7 @@ import numpy as np
 from os import path as osp
 from glob import glob
 
-EXPER_PATH = '/root/Internship-Valeo/Project/exports'
+EXPER_PATH = '/root/Internship-Valeo/Project/exports/HPatchesExportKeras'
 
 
 def get_paths(exper_name):
