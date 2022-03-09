@@ -1,7 +1,7 @@
 import tensorflow as tf
 import cv2 as cv
 import numpy as np
-
+from tensorflow_addons.image import transform as H_transform
 from datasets.utils import photometric_augmentation as photaug
 from models.homographies import (sample_homography, compute_valid_mask,
                                             warp_points, filter_points)
@@ -22,7 +22,7 @@ def photometric_augmentation(data, **config):
 
         indices = tf.range(len(primitives))
         if config['random_order']:
-            indices = tf.random_shuffle(indices)
+            indices = tf.random.shuffle(indices)
 
         def step(i, image):
             fn_pairs = [(tf.equal(indices[i], j),
@@ -35,25 +35,26 @@ def photometric_augmentation(data, **config):
                                  step, [0, data['image']], parallel_iterations=1)
         # _, mask_image = tf.while_loop(lambda i, image: tf.less(i, len(primitives)),
         #                          step, [0, data['mask_image']], parallel_iterations=1)
-        mask_image = data['mask_image']
-    return {**data, 'image': image, 'mask_image': mask_image}
+        #mask_image = data['mask_image']
+    return {**data, 'image': image}#, 'mask_image': mask_image}
 
 
 def homographic_augmentation(data, add_homography=False, **config):
     with tf.name_scope('homographic_augmentation'):
         image_shape = tf.shape(data['image'])[:2]
         homography = sample_homography(image_shape, **config['params'])[0]
-        warped_image = tf.contrib.image.transform(
+        warped_image = H_transform(
                 data['image'], homography, interpolation='BILINEAR')
-        warped_mask_image = tf.contrib.image.transform(
-            data['mask_image'], homography, interpolation='NEAREST')
+        #warped_mask_image = H_transform(
+        #    data['mask_image'], homography, interpolation='NEAREST')
         valid_mask = compute_valid_mask(image_shape, homography,
                                         config['valid_border_margin'])
 
         warped_points = warp_points(data['keypoints'], homography)
         warped_points = filter_points(warped_points, image_shape)
 
-    ret = {**data, 'image': warped_image, 'mask_image': warped_mask_image, 'keypoints': warped_points,
+    ret = {**data, 'image': warped_image, #'mask_image': warped_mask_image, 
+           'keypoints': warped_points,
            'valid_mask': valid_mask}
     if add_homography:
         ret['homography'] = homography
@@ -69,10 +70,10 @@ def add_dummy_valid_mask(data):
 def add_keypoint_map(data):
     with tf.name_scope('add_keypoint_map'):
         image_shape = tf.shape(data['image'])[:2]
-        kp = tf.minimum(tf.to_int32(tf.round(data['keypoints'])), image_shape-1)
+        kp = tf.minimum(tf.cast(tf.round(data['keypoints']), tf.int32), image_shape-1)
         kmap = tf.scatter_nd(
                 kp, tf.ones([tf.shape(kp)[0]], dtype=tf.int32), image_shape)
-    return {**data, 'keypoint_map': kmap}
+    return {**data, 'keypoints': kmap}
 
 
 def downsample(image, coordinates, **config):
@@ -89,7 +90,7 @@ def downsample(image, coordinates, **config):
     with tf.name_scope('downsample'):
         ratio = tf.divide(tf.convert_to_tensor(config['resize']), tf.shape(image)[0:2])
         coordinates = coordinates * tf.cast(ratio, tf.float32)
-        image = tf.image.resize_images(image, config['resize'],
+        image = tf.image.resize(image, config['resize'],
                                        method=tf.image.ResizeMethod.BILINEAR)
 
     return image, coordinates

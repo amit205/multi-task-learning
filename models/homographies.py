@@ -8,27 +8,26 @@ from utils.tools import dict_update
 
 
 homography_adaptation_default_config = {
-        'num': 100,
-        'data_format': 'NHWC',
+        'num': 1,
         'aggregation': 'sum',
         'valid_border_margin': 3,
+        'data_format': 'NHWC', # added this
         'homographies': {
             'translation': True,
             'rotation': True,
             'scaling': True,
             'perspective': True,
-            'scaling_amplitude': 0.2,
-            'perspective_amplitude_x': 0.2,
-            'perspective_amplitude_y': 0.2,
-            'allow_artifacts': True,
-            'patch_ratio': 0.85,
-            #'max_angle': pi,
+            'scaling_amplitude': 0.1,
+            'perspective_amplitude_x': 0.1,
+            'perspective_amplitude_y': 0.1,
+            'patch_ratio': 0.5,
+            'max_angle': pi,
         },
         'filter_counts': 0
 }
 
 
-def homography_adaptation(image, net, config = homography_adaptation_default_config):
+def homography_adaptation(image, net, config):
     """Perfoms homography adaptation.
     Inference using multiple random warped patches of the same input image for robust
     predictions.
