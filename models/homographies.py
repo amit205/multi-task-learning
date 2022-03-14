@@ -11,7 +11,6 @@ homography_adaptation_default_config = {
         'num': 1,
         'aggregation': 'sum',
         'valid_border_margin': 3,
-        'data_format': 'NHWC', # added this
         'homographies': {
             'translation': True,
             'rotation': True,
@@ -66,14 +65,12 @@ def homography_adaptation(image, net, config):
             kernel = cv.getStructuringElement(
                 cv.MORPH_ELLIPSE, (config['valid_border_margin'] * 2,) * 2)
             #with tf.device('/cpu:0'):           
-            count = tf.nn.erosion2d(
-                    value = count, filters = tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
-                    strides = [1, 1, 1, 1], dilations = [1, 1, 1, 1], padding = 'SAME',
-                    data_format = config['data_format'])[..., 0] + 1.
-            mask = tf.nn.erosion2d(
-                    value = mask, filters = tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
-                    strides = [1, 1, 1, 1], dilations = [1, 1, 1, 1], padding = 'SAME',
-                    data_format = config['data_format'])[..., 0] + 1.
+            count = tf.compat.v1.nn.erosion2d(
+                    count, tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
+                    [1, 1, 1, 1], [1, 1, 1, 1], 'SAME')[..., 0] + 1.
+            mask = tf.compat.v1.nn.erosion2d(
+                    mask, tf.cast(tf.constant(kernel)[..., tf.newaxis], tf.float32),
+                    [1, 1, 1, 1], [1, 1, 1, 1], 'SAME')[..., 0] + 1.
 
         # Predict detection probabilities
         prob = net(warped)#['prob']
