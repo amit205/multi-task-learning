@@ -40,7 +40,7 @@ def homography_adaptation(image, net, config):
         A dictionary which contains the aggregated detection probabilities.
     """
 
-    probs = net(image)#['prob']
+    probs = net(image)['prob']
     counts = tf.ones_like(probs)
     images = image
 
@@ -73,7 +73,7 @@ def homography_adaptation(image, net, config):
                     [1, 1, 1, 1], [1, 1, 1, 1], 'SAME')[..., 0] + 1.
 
         # Predict detection probabilities
-        prob = net(warped)#['prob']
+        prob = net(warped)['prob']
         prob = prob * mask
         prob_proj = H_transform(tf.expand_dims(prob, -1), H_inv,
                                 interpolation='BILINEAR')[..., 0]

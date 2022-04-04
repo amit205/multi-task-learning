@@ -80,7 +80,7 @@ class Coco(BaseDataset):
         if config['labels']:
             label_paths = []
             for n in names:
-                p = Path(EXPER_PATH, config['labels'], '{}.jpg.npy'.format(n))
+                p = Path(EXPER_PATH, config['labels'],'b\'{}\'.npz'.format(n))
                 assert p.exists(), 'Image {} has no corresponding label {}'.format(n, p)
                 label_paths.append(str(p))
             files['label_paths'] = label_paths
@@ -119,7 +119,7 @@ class Coco(BaseDataset):
 
         # Python function
         def _read_points(filename):
-            return np.load(filename.decode('utf-8')).astype(np.float32)
+            return np.load(filename.decode('utf-8'))['points'].astype(np.float32)
 
         names = tf.data.Dataset.from_tensor_slices(files['names'])
         images = tf.data.Dataset.from_tensor_slices(files['image_paths'])
