@@ -71,8 +71,6 @@ class Coco(BaseDataset):
             image_paths = image_paths[:config['truncate']]
             # mask_paths = mask_paths[:config['truncate']]
         names = [p.stem for p in image_paths]
-        for name in names:
-            name = name.replace('\'','')
         # names = x3
         image_paths = [str(p) for p in image_paths]
 #        mask_paths = [str(Path(mask_path, name))+'.jpg' for name in names]
@@ -183,17 +181,4 @@ class Coco(BaseDataset):
                 lambda d: {
                     **d, 'warped': {**d['warped'],
                                     'image': tf.cast(d['warped']['image'], tf.float32) / 255.}})
-            data = data.map_parallel(
-                lambda d: {
-                    **d, 'warped_image': d['warped']['image']})
-            data = data.map_parallel(
-                lambda d: {
-                    **d, 'warped_keypoints': d['warped']['keypoints']})
-            data = data.map_parallel(
-                lambda d: {
-                    **d, 'warped_valid_mask': d['warped']['valid_mask']})
-            data = data.map_parallel(
-                lambda d: {
-                    **d, 'homography': d['warped']['homography']})
-
         return data
