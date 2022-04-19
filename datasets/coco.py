@@ -14,6 +14,7 @@ import json
 
 default_config = {
         'labels': None,
+        'segmasks': None,
         'cache_in_memory': False,
         'validation_size': 100,
         'truncate': None,
@@ -84,7 +85,13 @@ class Coco(BaseDataset):
                 assert p.exists(), 'Image {} has no corresponding label {}'.format(n, p)
                 label_paths.append(str(p))
             files['label_paths'] = label_paths
-
+        if config['segmasks']:
+            mask_paths = []
+            for n in names:
+                p = Path(EXPER_PATH, config['segmasks'],'{}.jpg'.format(n))
+                assert p.exists(), 'Image {} has no corresponding segmentation_mask {}'.format(n, p)
+                mask_paths.append(str(p))
+            files['mask_paths'] = mask_paths
         tf.data.Dataset.map_parallel = lambda self, fn: self.map(
                 fn, num_parallel_calls=config['num_parallel_calls'])
 
@@ -93,6 +100,7 @@ class Coco(BaseDataset):
     def _get_data(self, files, split_name, **config):
         config = dict_update(default_config, config)
         has_keypoints = 'label_paths' in files
+        has_seg_masks = 'mask_paths' in files
         is_training = split_name == 'training'
 
         def _read_image(path):
@@ -101,7 +109,7 @@ class Coco(BaseDataset):
             return tf.cast(image, tf.float32)
 
         def _read_mask(path):
-            image = tf.read_file(path)
+            image = tf.io.read_file(path)
             image = tf.image.decode_png(image)
             return tf.cast(image, tf.float32)
 
@@ -122,12 +130,9 @@ class Coco(BaseDataset):
             return np.load(filename.decode('utf-8'))['points'].astype(np.float32)
 
         names = tf.data.Dataset.from_tensor_slices(files['names'])
-        images = tf.data.Dataset.from_tensor_slices(files['image_paths'])
-#        mask_images = tf.data.Dataset.from_tensor_slices(files['mask_paths'])
+        images = tf.data.Dataset.from_tensor_slices(files['image_paths']) 
         images = images.map(_read_image)
-        images = images.map(_preprocess)
-#        mask_images = mask_images.map(_read_mask)
-#        mask_images = mask_images.map(_preprocess_mask)
+        images = images.map(_preprocess)            
         data = tf.data.Dataset.zip({'image': images, #'mask_image': mask_images, 
                                     'name': names})
 
@@ -139,7 +144,12 @@ class Coco(BaseDataset):
             data = tf.data.Dataset.zip((data, kp)).map(
                     lambda d, k: {**d, 'keypoints': k})
             data = data.map(pipeline.add_dummy_valid_mask)
-
+        if has_seg_masks:
+            mask_images = tf.data.Dataset.from_tensor_slices(files['mask_paths'])
+            mask_images = mask_images.map(_read_mask)
+            mask_images = mask_images.map(_preprocess_mask)
+            data = tf.data.Dataset.zip((data, mask_images)).map(
+                    lambda d, k: {**d, 'mask_image': k})
         # Keep only the first elements for validation
         if split_name == 'validation':
             data = data.take(config['validation_size'])

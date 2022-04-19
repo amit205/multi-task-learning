@@ -33,10 +33,7 @@ def photometric_augmentation(data, **config):
 
         _, image = tf.while_loop(lambda i, image: tf.less(i, len(primitives)),
                                  step, [0, data['image']], parallel_iterations=1)
-        # _, mask_image = tf.while_loop(lambda i, image: tf.less(i, len(primitives)),
-        #                          step, [0, data['mask_image']], parallel_iterations=1)
-        #mask_image = data['mask_image']
-    return {**data, 'image': image}#, 'mask_image': mask_image}
+    return {**data, 'image': image}
 
 
 def homographic_augmentation(data, add_homography=False, **config):
@@ -45,15 +42,16 @@ def homographic_augmentation(data, add_homography=False, **config):
         homography = sample_homography(image_shape, **config['params'])[0]
         warped_image = H_transform(
                 data['image'], homography, interpolation='BILINEAR')
-        #warped_mask_image = H_transform(
-        #    data['mask_image'], homography, interpolation='NEAREST')
+        if 'mask_image' in data:
+            warped_mask_image = H_transform(
+                    data['mask_image'], homography, interpolation='BILINEAR')
         valid_mask = compute_valid_mask(image_shape, homography,
                                         config['valid_border_margin'])
 
         warped_points = warp_points(data['keypoints'], homography)
         warped_points = filter_points(warped_points, image_shape)
 
-    ret = {**data, 'image': warped_image, #'mask_image': warped_mask_image, 
+    ret = {**data, 'image': warped_image, 'mask_image': warped_mask_image, 
            'keypoints': warped_points,
            'valid_mask': valid_mask}
     if add_homography:
