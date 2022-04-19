@@ -44,7 +44,7 @@ def homographic_augmentation(data, add_homography=False, **config):
                 data['image'], homography, interpolation='BILINEAR')
         if 'mask_image' in data:
             warped_mask_image = H_transform(
-                    data['mask_image'], homography, interpolation='BILINEAR')
+                    data['mask_image'], homography, interpolation='NEAREST')
         valid_mask = compute_valid_mask(image_shape, homography,
                                         config['valid_border_margin'])
 
@@ -100,4 +100,13 @@ def ratio_preserving_resize(image, **config):
     new_size = tf.cast(tf.shape(image)[:2], tf.float32) * tf.reduce_max(scales)
     image = tf.image.resize(image, tf.cast(new_size, tf.int32),
                                    method=tf.image.ResizeMethod.BILINEAR)
+    return tf.image.resize_with_crop_or_pad(image, target_size[0], target_size[1])
+
+
+def ratio_preserving_mask_resize(image, **config):
+    target_size = tf.convert_to_tensor(config['resize'])
+    scales = tf.cast(tf.divide(target_size, tf.shape(image)[:2]), tf.float32)
+    new_size = tf.cast(tf.shape(image)[:2], tf.float32) * tf.reduce_max(scales)
+    image = tf.image.resize(image, tf.cast(new_size, tf.int32),
+                                   method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     return tf.image.resize_with_crop_or_pad(image, target_size[0], target_size[1])

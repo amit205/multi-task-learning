@@ -121,7 +121,7 @@ class Coco(BaseDataset):
             return image
         def _preprocess_mask(mask_image):
             if config['preprocessing']['resize']:
-                image = pipeline.ratio_preserving_resize(mask_image,
+                image = pipeline.ratio_preserving_mask_resize(mask_image,
                                                          **config['preprocessing'])
             return image
 
@@ -189,7 +189,7 @@ class Coco(BaseDataset):
 
         if has_seg_masks:
             data = data.map_parallel(
-            lambda d: {**d, 'mask_image': tf.cast(d['mask_image'], tf.float32) / 255.})
+            lambda d: {**d, 'mask_image': tf.cast(d['mask_image'], tf.float32) / 255})
 
         if config['warped_pair']['enable']:
             data = data.map_parallel(
@@ -200,6 +200,6 @@ class Coco(BaseDataset):
                 data = data.map_parallel(
                     lambda d: {
                         **d, 'warped': {**d['warped'],
-                                        'mask_image': tf.cast(d['warped']['mask_image'], tf.float32) / 255.}})
+                                        'mask_image': tf.cast(d['warped']['mask_image'], tf.float32) / 255}})
 
         return data
