@@ -186,9 +186,20 @@ class Coco(BaseDataset):
             data = data.map_parallel(pipeline.add_keypoint_map)
         data = data.map_parallel(
             lambda d: {**d, 'image': tf.cast(d['image'], tf.float32) / 255.})
+
+        if has_seg_masks:
+            data = data.map_parallel(
+            lambda d: {**d, 'mask_image': tf.cast(d['mask_image'], tf.float32) / 255.})
+
         if config['warped_pair']['enable']:
             data = data.map_parallel(
                 lambda d: {
                     **d, 'warped': {**d['warped'],
                                     'image': tf.cast(d['warped']['image'], tf.float32) / 255.}})
+            if has_seg_masks:
+                data = data.map_parallel(
+                    lambda d: {
+                        **d, 'warped': {**d['warped'],
+                                        'mask_image': tf.cast(d['warped']['mask_image'], tf.float32) / 255.}})
+
         return data
