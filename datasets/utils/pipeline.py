@@ -50,8 +50,12 @@ def homographic_augmentation(data, add_homography=False, **config):
 
         warped_points = warp_points(data['keypoints'], homography)
         warped_points = filter_points(warped_points, image_shape)
-
-    ret = {**data, 'image': warped_image, 'mask_image': warped_mask_image, 
+    if 'mask_image' in data:
+        ret = {**data, 'image': warped_image, 'mask_image': warped_mask_image, 
+           'keypoints': warped_points,
+           'valid_mask': valid_mask}
+    else:
+        ret = {**data, 'image': warped_image, 
            'keypoints': warped_points,
            'valid_mask': valid_mask}
     if add_homography:

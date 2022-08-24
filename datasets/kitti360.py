@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-#from pathlib import Path
+from pathlib import Path
 from glob import glob
 import os
 from .base_dataset import BaseDataset
@@ -84,7 +84,7 @@ class Kitti(BaseDataset):
         if config['labels']:
             label_paths = []
             for n in names:
-                p = Path(EXPER_PATH, config['labels'],'{}.npz'.format(n))
+                p = Path(EXPER_PATH, config['labels'],'{}.npz'.format("b'"+n+"'"))
                 assert p.exists(), 'Image {} has no corresponding label {}'.format(n, p)
                 label_paths.append(str(p))
             files['label_paths'] = label_paths
