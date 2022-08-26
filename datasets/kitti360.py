@@ -7,7 +7,7 @@ from .base_dataset import BaseDataset
 from .utils import pipeline
 #from superpoint.settings import DATA_PATH, EXPER_PATH
 from utils.tools import dict_update
-DATA_PATH = '/root/Internship-Valeo/Project/data/KITTI-360/'
+DATA_PATH = '/root/Internship-Valeo/Project/data/'
 EXPER_PATH = '/root/Internship-Valeo/Project/data/KITTI-360'
 import sys, getopt
 import json
@@ -54,8 +54,8 @@ class Kitti(BaseDataset):
         #         for i in range(80):
         #             categories.append(json.dumps(js['categories'][i]['name']).strip('""'))
 
-        #base_path = Path(DATA_PATH, 'KITTI-360' ,'data_2d_raw','2013_05_28_drive_0000_sync','image_00', 'data_rect')
-        base_path = glob(DATA_PATH+'data_2d_raw/*/image_00/data_rect/*')
+        base_path = Path(DATA_PATH, 'KITTI-360' ,'train_images')
+        #base_path = glob(DATA_PATH+'data_2d_raw/*/image_00/data_rect/*')
 #        mask_path = Path(DATA_PATH, 'COCO/masktrain2014/')
         # a = []
         # x1 = []
@@ -68,13 +68,14 @@ class Kitti(BaseDataset):
         #     x3.extend([category + '/' + s for s in a])
         # image_paths = iter(x1)
         # mask_paths = iter(x2)
-        #image_paths = list(base_path.iterdir())
-        image_paths = list(base_path)
+        image_paths = list(base_path.iterdir())
+        #image_paths = list(base_path)
         # mask_paths = list(mask_path.iterdir())
         if config['truncate']:
             image_paths = image_paths[:config['truncate']]
             # mask_paths = mask_paths[:config['truncate']]
-        names = [p[76:79]+p[104:114] for p in image_paths]
+        #names = [p[76:79]+p[104:114] for p in image_paths]
+        names = [p.stem for p in image_paths]
         # names = x3
         image_paths = [str(p) for p in image_paths]
 #        mask_paths = [str(Path(mask_path, name))+'.jpg' for name in names]
@@ -84,7 +85,8 @@ class Kitti(BaseDataset):
         if config['labels']:
             label_paths = []
             for n in names:
-                p = Path(EXPER_PATH, config['labels'],'{}.npz'.format("b'"+n+"'"))
+                #p = Path(EXPER_PATH, config['labels'],'{}.npz'.format("b'"+n+"'"))
+                p = Path(EXPER_PATH, config['labels'],'{}.npz'.format(n))
                 assert p.exists(), 'Image {} has no corresponding label {}'.format(n, p)
                 label_paths.append(str(p))
             files['label_paths'] = label_paths

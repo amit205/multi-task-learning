@@ -76,7 +76,8 @@ def compute_homography(data, keep_k_points=1000, correctness_thresh=3, orb=False
         bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
     matches = bf.match(desc, warped_desc)
     matches_idx = np.array([m.queryIdx for m in matches])
-    if len(matches_idx) == 0:  # No match found
+    #if len(matches_idx) == 0:  # No match found
+    if len(matches_idx) <4: # The input arrays should have at least 4 corresponding point sets to calculate Homography in function 'findHomography'
         return {'correctness': 0.,
                 'keypoints1': keypoints,
                 'keypoints2': warped_keypoints,
@@ -86,7 +87,6 @@ def compute_homography(data, keep_k_points=1000, correctness_thresh=3, orb=False
     m_keypoints = keypoints[matches_idx, :]
     matches_idx = np.array([m.trainIdx for m in matches])
     m_warped_keypoints = warped_keypoints[matches_idx, :]
-
     # Estimate the homography between the matches using RANSAC
     H, inliers = cv2.findHomography(m_keypoints[:, [1, 0]],
                                     m_warped_keypoints[:, [1, 0]],
