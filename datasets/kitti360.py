@@ -14,8 +14,10 @@ import json
 
 
 default_config = {
-        'labels': None,
-        'segmasks': None,
+        'labels_train': None,
+        'labels_val': None,
+        'segmasks_train': None,
+        'segmasks_val': None,
         'cache_in_memory': False,
         'validation_size': 100,
         'truncate': None,
@@ -43,7 +45,7 @@ default_config = {
         },
     }
 class Kitti(BaseDataset):
-    def _init_dataset(self, **config):
+    def _init_dataset(self, split, **config):
         config = dict_update(default_config, config)
         # cat_2014 = '/root/Internship-Valeo/data/COCO/annotations_trainval2014/annotations/instances_val2014.json'
         # categories = []
@@ -53,8 +55,11 @@ class Kitti(BaseDataset):
         #         js = json.loads(COCO.read())
         #         for i in range(80):
         #             categories.append(json.dumps(js['categories'][i]['name']).strip('""'))
-
-        base_path = Path(DATA_PATH, 'KITTI-360' ,'train_images')
+        is_training = split == 'training'
+        if is_training:
+            base_path = Path(DATA_PATH, 'KITTI-360' ,'train_images')
+        else:
+            base_path = Path(DATA_PATH, 'KITTI-360' ,'val_images')
         #base_path = glob(DATA_PATH+'data_2d_raw/*/image_00/data_rect/*')
 #        mask_path = Path(DATA_PATH, 'COCO/masktrain2014/')
         # a = []
@@ -82,18 +87,33 @@ class Kitti(BaseDataset):
         # mask_paths = [str(p) for p in mask_paths]
         files = {'image_paths': image_paths, #'mask_paths': mask_paths, 
                  'names': names}
-        if config['labels']:
+        if is_training and config['labels_train']:
             label_paths = []
             for n in names:
-                #p = Path(EXPER_PATH, config['labels'],'{}.npz'.format("b'"+n+"'"))
-                p = Path(EXPER_PATH, config['labels'],'{}.npz'.format(n))
+                #p = Path(EXPER_PATH, config['labels_train'],'{}.npz'.format("b'"+n+"'"))
+                p = Path(EXPER_PATH, config['labels_train'],'{}.npz'.format(n))
                 assert p.exists(), 'Image {} has no corresponding label {}'.format(n, p)
                 label_paths.append(str(p))
             files['label_paths'] = label_paths
-        if config['segmasks']:
+        #if not(is_training) and config['labels_val']:
+        #    label_paths = []
+        #    for n in names:
+        #        #p = Path(EXPER_PATH, config['labels_val'],'{}.npz'.format("b'"+n+"'"))
+        #        p = Path(EXPER_PATH, config['labels_val'],'{}.npz'.format(n))
+        #        assert p.exists(), 'Image {} has no corresponding label {}'.format(n, p)
+        #        label_paths.append(str(p))
+        #    files['label_paths'] = label_paths
+        if is_training and config['segmasks_train']:
             mask_paths = []
             for n in names:
-                p = Path(EXPER_PATH, config['segmasks'],'{}.jpg'.format(n))
+                p = Path(EXPER_PATH, config['segmasks_train'],'{}.jpg'.format(n))
+                assert p.exists(), 'Image {} has no corresponding segmentation_mask {}'.format(n, p)
+                mask_paths.append(str(p))
+            files['mask_paths'] = mask_paths
+        if not(is_training) and config['segmasks_val']:
+            mask_paths = []
+            for n in names:
+                p = Path(EXPER_PATH, config['segmasks_val'],'{}.jpg'.format(n))
                 assert p.exists(), 'Image {} has no corresponding segmentation_mask {}'.format(n, p)
                 mask_paths.append(str(p))
             files['mask_paths'] = mask_paths
